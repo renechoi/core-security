@@ -1,11 +1,13 @@
-package com.example.coresecurity.security.hanlder;
+package com.example.coresecurity.security.handler;
 
 import com.example.coresecurity.domain.entity.Account;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -24,8 +26,10 @@ public class AjaxAuthenticationSuccessHandler implements AuthenticationSuccessHa
 
         response.setStatus(HttpStatus.OK.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-//        HttpSession session = request.getSession(false);
-//        session.invalidate();
+
+//        HttpSession session = request.getSession();
+//        session.setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
+
         mapper.writeValue(response.getWriter(), account);
     }
 }

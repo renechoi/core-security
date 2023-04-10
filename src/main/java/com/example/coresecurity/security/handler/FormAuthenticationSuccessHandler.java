@@ -1,4 +1,4 @@
-package com.example.coresecurity.security.hanlder;
+package com.example.coresecurity.security.handler;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -35,7 +35,5 @@ public class FormAuthenticationSuccessHandler extends SimpleUrlAuthenticationSuc
         } else {
             redirectStrategy.sendRedirect(request, response, getDefaultTargetUrl());
         }
-
     }
-
 }

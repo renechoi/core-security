@@ -1,6 +1,5 @@
 package com.example.coresecurity.security.provider;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -9,7 +8,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
 
@@ -17,8 +15,6 @@ import com.example.coresecurity.security.service.AccountContext;
 import com.example.coresecurity.security.token.AjaxAuthenticationToken;
 
 @Slf4j
-@Component
-@RequiredArgsConstructor
 public class AjaxAuthenticationProvider implements AuthenticationProvider {
 
     @Autowired

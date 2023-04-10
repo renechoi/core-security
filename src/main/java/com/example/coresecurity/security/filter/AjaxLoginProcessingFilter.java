@@ -2,7 +2,9 @@ package com.example.coresecurity.security.filter;
 
 import com.example.coresecurity.domain.dto.AccountDto;
 import com.example.coresecurity.security.token.AjaxAuthenticationToken;
+import com.example.coresecurity.util.WebUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -16,17 +18,20 @@ import java.io.IOException;
 
 public class AjaxLoginProcessingFilter extends AbstractAuthenticationProcessingFilter {
 
+    private static final String XML_HTTP_REQUEST = "XMLHttpRequest";
+    private static final String X_REQUESTED_WITH = "X-Requested-With";
+
     private ObjectMapper objectMapper = new ObjectMapper();
     
     public AjaxLoginProcessingFilter() {
-        super(new AntPathRequestMatcher("/api/login", "POST"));
+        super(new AntPathRequestMatcher("/ajaxLogin", "POST"));
     }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException, IOException {
 
-        if (!isAjax(request)) {
+        if (!HttpMethod.POST.name().equals(request.getMethod()) || !WebUtil.isAjax(request)) {
             throw new IllegalArgumentException("Authentication method not supported");
         }
 
@@ -38,9 +43,5 @@ public class AjaxLoginProcessingFilter extends AbstractAuthenticationProcessingF
         AjaxAuthenticationToken token = new AjaxAuthenticationToken(accountDto.getUsername(),accountDto.getPassword());
 
         return this.getAuthenticationManager().authenticate(token);
-    }
-
-    public static boolean isAjax(HttpServletRequest request) {
-        return "XMLHttpRequest".equals(request.getHeader("X-Requested-With"));
     }
 }

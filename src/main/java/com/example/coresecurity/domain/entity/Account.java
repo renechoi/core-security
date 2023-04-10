@@ -1,28 +1,41 @@
 package com.example.coresecurity.domain.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import javax.persistence.*;
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Data
+@ToString(exclude = {"userRoles"})
+@Builder
+@EqualsAndHashCode(of = "id")
 @NoArgsConstructor
 @AllArgsConstructor
-public class Account {
+public class Account implements Serializable {
 
     @Id
     @GeneratedValue
     private Long id;
-    private String username;
-    private String password;
-    private String email;
-    private String age;
-    private String role;
 
+    @Column
+    private String username;
+
+    @Column
+    private String email;
+
+    @Column
+    private int age;
+
+    @Column
+    private String password;
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade={CascadeType.ALL})
+    @JoinTable(name = "account_roles", joinColumns = { @JoinColumn(name = "account_id") }, inverseJoinColumns = {
+            @JoinColumn(name = "role_id") })
+    private Set<Role> userRoles = new HashSet<>();
 }
 
 

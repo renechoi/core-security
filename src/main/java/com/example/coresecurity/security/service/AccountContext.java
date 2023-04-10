@@ -1,23 +1,23 @@
 package com.example.coresecurity.security.service;
 
-import java.util.ArrayList;
-
+import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.example.coresecurity.domain.entity.Account;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 @Data
 public class AccountContext extends User {
-  private final Account account;
+  private Account account;
 
-  public AccountContext(Account account, ArrayList<GrantedAuthority> roles) {
+  public AccountContext(Account account, List<GrantedAuthority> roles) {
     super(account.getUsername(), account.getPassword(), roles);
     this.account = account;
   }
-
 }

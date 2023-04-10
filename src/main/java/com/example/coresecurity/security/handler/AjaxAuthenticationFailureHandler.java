@@ -1,4 +1,4 @@
-package com.example.coresecurity.security.hanlder;
+package com.example.coresecurity.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
