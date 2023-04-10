@@ -1,8 +1,10 @@
 package com.example.coresecurity.security.configs;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -26,15 +28,18 @@ import lombok.extern.slf4j.Slf4j;
 @Configuration
 @EnableWebSecurity
 @Slf4j
-@RequiredArgsConstructor
+@Order(1)
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
-	private final AuthenticationSuccessHandler authenticationSuccessHandler;
-	private final AuthenticationFailureHandler authenticationFailureHandler;
+	@Autowired
+	UserDetailsService userDetailsService;
 
-	private final UserDetailsService userDetailsService;
-
-	private final FormWebAuthenticationDetailsSource formWebAuthenticationDetailsSource;
+	@Autowired
+	private FormWebAuthenticationDetailsSource formWebAuthenticationDetailsSource;
+	@Autowired
+	private AuthenticationSuccessHandler formAuthenticationSuccessHandler;
+	@Autowired
+	private AuthenticationFailureHandler formAuthenticationFailureHandler;
 
 	@Override
 	public void configure(WebSecurity web) throws Exception {
@@ -73,16 +78,15 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.loginProcessingUrl("/login_proc")
 			.authenticationDetailsSource(formWebAuthenticationDetailsSource)
 			.defaultSuccessUrl("/")
-			.successHandler(authenticationSuccessHandler)
-			.failureHandler(authenticationFailureHandler)
+			.successHandler(formAuthenticationSuccessHandler)
+			.failureHandler(formAuthenticationFailureHandler)
 			.permitAll()
-
 
 			.and()
 			.exceptionHandling()
 			.accessDeniedPage("/denied")
 			.accessDeniedHandler(accessDeniedHandler())
-			;
+		;
 
 	}
 
