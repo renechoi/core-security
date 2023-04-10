@@ -17,12 +17,13 @@ import com.example.coresecurity.domain.dto.ResourcesDto;
 import com.example.coresecurity.domain.entity.Resources;
 import com.example.coresecurity.domain.entity.Role;
 import com.example.coresecurity.repository.RoleRepository;
+import com.example.coresecurity.security.metadatasource.UrlFilterInvocationSecurityMetadataSource;
 import com.example.coresecurity.service.ResourcesService;
 import com.example.coresecurity.service.RoleService;
 
 @Controller
 public class ResourcesController {
-	
+
 	@Autowired
 	private ResourcesService resourcesService;
 
@@ -31,6 +32,10 @@ public class ResourcesController {
 
 	@Autowired
 	private RoleService roleService;
+
+
+	@Autowired
+	private UrlFilterInvocationSecurityMetadataSource filterInvocationSecurityMetadataSource;
 
 	@GetMapping(value="/admin/resources")
 	public String getResources(Model model) throws Exception {
@@ -53,6 +58,9 @@ public class ResourcesController {
 
 		resourcesService.createResources(resources);
 
+		if("url".equals(resourcesDto.getResourceType())) {
+			filterInvocationSecurityMetadataSource.reload();
+		}
 		return "redirect:/admin/resources";
 	}
 
@@ -75,7 +83,7 @@ public class ResourcesController {
 	public String getResources(@PathVariable String id, Model model) throws Exception {
 
 		List<Role> roleList = roleService.getRoles();
-        model.addAttribute("roleList", roleList);
+		model.addAttribute("roleList", roleList);
 		Resources resources = resourcesService.getResources(Long.valueOf(id));
 
 		ModelMapper modelMapper = new ModelMapper();
@@ -90,6 +98,10 @@ public class ResourcesController {
 
 		Resources resources = resourcesService.getResources(Long.valueOf(id));
 		resourcesService.deleteResources(Long.valueOf(id));
+
+		if("url".equals(resources.getResourceType())) {
+			filterInvocationSecurityMetadataSource.reload();
+		}
 
 		return "redirect:/admin/resources";
 	}

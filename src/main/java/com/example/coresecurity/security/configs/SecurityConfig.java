@@ -32,6 +32,7 @@ import java.util.List;
 import com.example.coresecurity.security.common.FormWebAuthenticationDetailsSource;
 import com.example.coresecurity.security.configs.AjaxLoginConfigurer;
 import com.example.coresecurity.security.factory.UrlResourcesMapFactoryBean;
+import com.example.coresecurity.security.filter.PermitAllFilter;
 import com.example.coresecurity.security.handler.AjaxAuthenticationFailureHandler;
 import com.example.coresecurity.security.handler.AjaxAuthenticationSuccessHandler;
 import com.example.coresecurity.security.handler.FormAccessDeniedHandler;
@@ -53,6 +54,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private AuthenticationFailureHandler formAuthenticationFailureHandler;
     @Autowired
     private SecurityResourceService securityResourceService;
+
+
+    private String[] permitAllResources = {"/", "/login", "/user/login/**"};
 
     @Override
     public void configure(WebSecurity web) throws Exception {
@@ -145,13 +149,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
-    public FilterSecurityInterceptor customFilterSecurityInterceptor() throws Exception {
+    public PermitAllFilter customFilterSecurityInterceptor() throws Exception {
 
-        FilterSecurityInterceptor filterSecurityInterceptor = new FilterSecurityInterceptor();
-        filterSecurityInterceptor.setSecurityMetadataSource(urlFilterInvocationSecurityMetadataSource());
-        filterSecurityInterceptor.setAccessDecisionManager(affirmativeBased());
-        filterSecurityInterceptor.setAuthenticationManager(authenticationManagerBean());
-        return filterSecurityInterceptor;
+        PermitAllFilter permitAllFilter = new PermitAllFilter(permitAllResources);
+        permitAllFilter.setSecurityMetadataSource(urlFilterInvocationSecurityMetadataSource());
+        permitAllFilter.setAccessDecisionManager(affirmativeBased());
+        permitAllFilter.setAuthenticationManager(authenticationManagerBean());
+        return permitAllFilter;
     }
 
     private AccessDecisionManager affirmativeBased() {
@@ -165,7 +169,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public FilterInvocationSecurityMetadataSource urlFilterInvocationSecurityMetadataSource() {
-        return new UrlFilterInvocationSecurityMetadataSource(urlResourcesMapFactoryBean().getObject());
+        return new UrlFilterInvocationSecurityMetadataSource(urlResourcesMapFactoryBean().getObject(), securityResourceService);
     }
 
     @Bean
