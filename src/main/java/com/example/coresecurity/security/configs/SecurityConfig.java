@@ -3,7 +3,6 @@ package com.example.coresecurity.security.configs;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -13,8 +12,11 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
-import com.example.coresecurity.security.provider.CustomAuthenticationProvider;
+import com.example.coresecurity.security.common.FormWebAuthenticationDetailsSource;
+import com.example.coresecurity.security.provider.FormAuthenticationProvider;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,9 +27,12 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+	private final AuthenticationSuccessHandler authenticationSuccessHandler;
+	private final AuthenticationFailureHandler authenticationFailureHandler;
+
 	private final UserDetailsService userDetailsService;
 
-	private final AuthenticationDetailsSource authenticationDetailsSource;
+	private final FormWebAuthenticationDetailsSource formWebAuthenticationDetailsSource;
 
 	@Override
 	public void configure(WebSecurity web) throws Exception {
@@ -47,23 +52,27 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	public AuthenticationProvider authenticationProvider() {
-		return new CustomAuthenticationProvider(passwordEncoder(), userDetailsService);
+		return new FormAuthenticationProvider(passwordEncoder(), userDetailsService);
 	}
 
 	@Override
 	protected void configure(final HttpSecurity http) throws Exception {
 		http
 			.authorizeRequests()
-			.antMatchers("/", "/users", "user/login/**").permitAll()
+			.antMatchers("/", "/users", "user/login/**", "login*").permitAll()
 			.antMatchers("/mypage").hasRole("USER")
 			.antMatchers("/messages").hasRole("MANAGER")
 			.antMatchers("/config").hasRole("ADMIN")
 			.anyRequest().authenticated()
 			.and()
+
 			.formLogin()
 			.loginPage("/login")
 			.loginProcessingUrl("/login_proc")
+			.authenticationDetailsSource(formWebAuthenticationDetailsSource)
 			.defaultSuccessUrl("/")
+			.successHandler(authenticationSuccessHandler)
+			.failureHandler(authenticationFailureHandler)
 			.permitAll();
 
 	}
