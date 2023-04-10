@@ -3,6 +3,7 @@ package com.example.coresecurity.security.provider;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,14 +17,14 @@ import com.example.coresecurity.security.service.AccountContext;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class FormAuthenticationProvider implements AuthenticationProvider {
+public class CustomAuthenticationProvider implements AuthenticationProvider {
 
-    @Autowired
     private UserDetailsService userDetailsService;
 
     private PasswordEncoder passwordEncoder;
 
-    public FormAuthenticationProvider(PasswordEncoder passwordEncoder) {
+    public CustomAuthenticationProvider(PasswordEncoder passwordEncoder, UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -31,10 +32,10 @@ public class FormAuthenticationProvider implements AuthenticationProvider {
     @Transactional
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
-        String loginId = authentication.getName();
+        String userName = authentication.getName();
         String password = (String) authentication.getCredentials();
 
-        AccountContext accountContext = (AccountContext)userDetailsService.loadUserByUsername(loginId);
+        AccountContext accountContext = (AccountContext)userDetailsService.loadUserByUsername(userName);
 
         if (!passwordEncoder.matches(password, accountContext.getPassword())) {
             throw new BadCredentialsException("Invalid password");

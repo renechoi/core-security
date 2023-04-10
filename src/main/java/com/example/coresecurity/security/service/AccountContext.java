@@ -7,14 +7,17 @@ import org.springframework.security.core.userdetails.User;
 
 import com.example.coresecurity.domain.entity.Account;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 public class AccountContext extends User {
-  private Account account;
+  private final Account account;
 
   public AccountContext(Account account, ArrayList<GrantedAuthority> roles) {
     super(account.getUsername(), account.getPassword(), roles);
     this.account = account;
   }
+
 }

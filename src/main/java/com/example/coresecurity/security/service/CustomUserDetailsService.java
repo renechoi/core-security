@@ -15,28 +15,27 @@ import org.springframework.stereotype.Service;
 import com.example.coresecurity.domain.entity.Account;
 import com.example.coresecurity.repository.UserRepository;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service("userDetailsService")
-public class UserDetailsServiceImpl implements UserDetailsService {
+@RequiredArgsConstructor
+public class CustomUserDetailsService implements UserDetailsService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    @Autowired
-    private HttpServletRequest request;
+    private final HttpServletRequest request;
 
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
         Account account = userRepository.findByUsername(username);
         if (account == null) {
-            if (userRepository.countByUsername(username) == 0) {
                 throw new UsernameNotFoundException("No user found with username: " + username);
-            }
         }
-        ArrayList<GrantedAuthority> roles = new ArrayList<GrantedAuthority>();
+        ArrayList<GrantedAuthority> roles = new ArrayList<>();
         roles.add(new SimpleGrantedAuthority(account.getRole()));
+        // roles.add(new SimpleGrantedAuthority("ROLE_USER"));
 
         return new AccountContext(account, roles);
     }
