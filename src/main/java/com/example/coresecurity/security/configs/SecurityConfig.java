@@ -3,6 +3,7 @@ package com.example.coresecurity.security.configs;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.access.AccessDecisionManager;
@@ -29,12 +30,15 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.example.coresecurity.security.common.FormWebAuthenticationDetailsSource;
+import com.example.coresecurity.security.configs.AjaxLoginConfigurer;
+import com.example.coresecurity.security.factory.UrlResourcesMapFactoryBean;
 import com.example.coresecurity.security.handler.AjaxAuthenticationFailureHandler;
 import com.example.coresecurity.security.handler.AjaxAuthenticationSuccessHandler;
 import com.example.coresecurity.security.handler.FormAccessDeniedHandler;
-import com.example.coresecurity.security.metadatasource.UrlFilterInvocationSecurityMetadatsSource;
+import com.example.coresecurity.security.metadatasource.UrlFilterInvocationSecurityMetadataSource;
 import com.example.coresecurity.security.provider.AjaxAuthenticationProvider;
 import com.example.coresecurity.security.provider.FormAuthenticationProvider;
+import com.example.coresecurity.service.SecurityResourceService;
 
 @Configuration
 @EnableWebSecurity
@@ -47,6 +51,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private AuthenticationSuccessHandler formAuthenticationSuccessHandler;
     @Autowired
     private AuthenticationFailureHandler formAuthenticationFailureHandler;
+    @Autowired
+    private SecurityResourceService securityResourceService;
 
     @Override
     public void configure(WebSecurity web) throws Exception {
@@ -67,29 +73,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(final HttpSecurity http) throws Exception {
         http
-                .authorizeRequests()
-                .antMatchers("/mypage").hasRole("USER")
-                .antMatchers("/messages").hasRole("MANAGER")
-                .antMatchers("/config").hasRole("ADMIN")
-                .antMatchers("/**").permitAll()
-                .anyRequest().authenticated()
-                .and()
-                .formLogin()
-                .loginPage("/login")
-                .loginProcessingUrl("/login_proc")
-                .authenticationDetailsSource(formWebAuthenticationDetailsSource)
-                .successHandler(formAuthenticationSuccessHandler)
-                .failureHandler(formAuthenticationFailureHandler)
-                .permitAll()
-        .and()
-                .exceptionHandling()
-//                .authenticationEntryPoint(new AjaxLoginAuthenticationEntryPoint())
-                .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
-                .accessDeniedPage("/denied")
-                .accessDeniedHandler(accessDeniedHandler())
-//        .and()
-//                .addFilterBefore(customFilterSecurityInterceptor(), FilterSecurityInterceptor.class)
-        ;
+            .authorizeRequests()
+            .anyRequest().authenticated()
+            .and()
+            .formLogin()
+            .loginPage("/login")
+            .loginProcessingUrl("/login_proc")
+            .authenticationDetailsSource(formWebAuthenticationDetailsSource)
+            .successHandler(formAuthenticationSuccessHandler)
+            .failureHandler(formAuthenticationFailureHandler)
+            .permitAll()
+            .and()
+            .exceptionHandling()
+            .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
+            .accessDeniedPage("/denied")
+            .accessDeniedHandler(accessDeniedHandler())
+            .and()
+            .addFilterAt(customFilterSecurityInterceptor(), FilterSecurityInterceptor.class);
 
         http.csrf().disable();
 
@@ -98,11 +98,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private void customConfigurer(HttpSecurity http) throws Exception {
         http
-                .apply(new AjaxLoginConfigurer<>())
-                .successHandlerAjax(ajaxAuthenticationSuccessHandler())
-                .failureHandlerAjax(ajaxAuthenticationFailureHandler())
-                .loginProcessingUrl("/api/login")
-                .setAuthenticationManager(authenticationManagerBean());
+            .apply(new AjaxLoginConfigurer<>())
+            .successHandlerAjax(ajaxAuthenticationSuccessHandler())
+            .failureHandlerAjax(ajaxAuthenticationFailureHandler())
+            .loginProcessingUrl("/api/login")
+            .setAuthenticationManager(authenticationManagerBean());
     }
 
     @Bean
@@ -137,6 +137,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     @Bean
+    public FilterRegistrationBean filterRegistrationBean() throws Exception {
+        FilterRegistrationBean filterRegistrationBean = new FilterRegistrationBean();
+        filterRegistrationBean.setFilter(customFilterSecurityInterceptor());
+        filterRegistrationBean.setEnabled(false);
+        return filterRegistrationBean;
+    }
+
+    @Bean
     public FilterSecurityInterceptor customFilterSecurityInterceptor() throws Exception {
 
         FilterSecurityInterceptor filterSecurityInterceptor = new FilterSecurityInterceptor();
@@ -147,18 +155,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     private AccessDecisionManager affirmativeBased() {
-        AffirmativeBased affirmativeBased = new AffirmativeBased(getAccessDecistionVoters());
+        AffirmativeBased affirmativeBased = new AffirmativeBased(getAccessDecisionVoters());
         return affirmativeBased;
     }
 
-    private List<AccessDecisionVoter<?>> getAccessDecistionVoters() {
+    private List<AccessDecisionVoter<?>> getAccessDecisionVoters() {
         return Arrays.asList(new RoleVoter());
     }
 
     @Bean
     public FilterInvocationSecurityMetadataSource urlFilterInvocationSecurityMetadataSource() {
-        return new UrlFilterInvocationSecurityMetadatsSource();
+        return new UrlFilterInvocationSecurityMetadataSource(urlResourcesMapFactoryBean().getObject());
     }
 
-
+    @Bean
+    public UrlResourcesMapFactoryBean urlResourcesMapFactoryBean(){
+        UrlResourcesMapFactoryBean urlResourcesMapFactoryBean = new UrlResourcesMapFactoryBean();
+        urlResourcesMapFactoryBean.setSecurityResourceService(securityResourceService);
+        return urlResourcesMapFactoryBean;
+    }
 }
