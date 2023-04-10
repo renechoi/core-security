@@ -11,7 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.example.coresecurity.domain.entity.AccessIp;
 import com.example.coresecurity.domain.entity.Resources;
 import com.example.coresecurity.repository.AccessIpRepository;
 import com.example.coresecurity.repository.ResourcesRepository;
@@ -42,8 +41,40 @@ public class SecurityResourceService {
         return result;
     }
 
+    public LinkedHashMap<String, List<ConfigAttribute>> getMethodResourceList() {
+
+        LinkedHashMap<String, List<ConfigAttribute>> result = new LinkedHashMap<>();
+        List<Resources> resourcesList = resourcesRepository.findAllMethodResources();
+        resourcesList.forEach(re ->
+                {
+                    List<ConfigAttribute> configAttributeList = new ArrayList<>();
+                    re.getRoleSet().forEach(ro -> {
+                        configAttributeList.add(new SecurityConfig(ro.getRoleName()));
+                    });
+                    result.put(re.getResourceName(), configAttributeList);
+                }
+        );
+        return result;
+    }
+
+    public LinkedHashMap<String, List<ConfigAttribute>> getPointcutResourceList() {
+
+        LinkedHashMap<String, List<ConfigAttribute>> result = new LinkedHashMap<>();
+        List<Resources> resourcesList = resourcesRepository.findAllPointcutResources();
+        resourcesList.forEach(re ->
+                {
+                    List<ConfigAttribute> configAttributeList = new ArrayList<>();
+                    re.getRoleSet().forEach(ro -> {
+                        configAttributeList.add(new SecurityConfig(ro.getRoleName()));
+                    });
+                    result.put(re.getResourceName(), configAttributeList);
+                }
+        );
+        return result;
+    }
 
     public List<String> getAccessIpList() {
-        return accessIpRepository.findAll().stream().map(AccessIp::getIpAddress).collect(Collectors.toList());
+        List<String> accessIpList = accessIpRepository.findAll().stream().map(accessIp -> accessIp.getIpAddress()).collect(Collectors.toList());
+        return accessIpList;
     }
 }

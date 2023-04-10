@@ -1,46 +1,130 @@
-package com.example.coresecurity.security.configs;//package io.security.corespringsecurity.security.configs;
+package com.example.coresecurity.security.configs;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.security.access.AccessDecisionManager;
+import org.springframework.security.access.AccessDecisionVoter;
+import org.springframework.security.access.annotation.Jsr250Voter;
+import org.springframework.security.access.expression.method.ExpressionBasedPreInvocationAdvice;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
+import org.springframework.security.access.intercept.RunAsManager;
+import org.springframework.security.access.method.MapBasedMethodSecurityMetadataSource;
+import org.springframework.security.access.method.MethodSecurityMetadataSource;
+import org.springframework.security.access.prepost.PreInvocationAuthorizationAdviceVoter;
+import org.springframework.security.access.vote.AffirmativeBased;
+import org.springframework.security.access.vote.AuthenticatedVoter;
+import org.springframework.security.access.vote.RoleHierarchyVoter;
+import org.springframework.security.access.vote.RoleVoter;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.method.configuration.GlobalMethodSecurityConfiguration;
+import org.springframework.security.config.core.GrantedAuthorityDefaults;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import com.example.coresecurity.security.factory.MethodResourcesMapFactoryBean;
+import com.example.coresecurity.security.interceptor.CustomMethodSecurityInterceptor;
+import com.example.coresecurity.security.processor.ProtectPointcutPostProcessor;
+import com.example.coresecurity.service.SecurityResourceService;
+
+@Configuration
+@EnableGlobalMethodSecurity(prePostEnabled = true)
+public class MethodSecurityConfig extends GlobalMethodSecurityConfiguration {
+
+    @Autowired
+    private SecurityResourceService securityResourceService;
+
+    @Override
+    protected MethodSecurityMetadataSource customMethodSecurityMetadataSource() {
+        return mapBasedMethodSecurityMetadataSource();
+    }
+
+    @Bean
+    public MapBasedMethodSecurityMetadataSource mapBasedMethodSecurityMetadataSource() {
+        return new MapBasedMethodSecurityMetadataSource(methodResourcesMapFactoryBean().getObject());
+    }
+
+    @Bean
+    public MethodResourcesMapFactoryBean methodResourcesMapFactoryBean(){
+        MethodResourcesMapFactoryBean methodResourcesMapFactoryBean = new MethodResourcesMapFactoryBean();
+        methodResourcesMapFactoryBean.setSecurityResourceService(securityResourceService);
+        methodResourcesMapFactoryBean.setResourceType("method");
+        return methodResourcesMapFactoryBean;
+    }
+
+    @Bean
+    @Profile("pointcut")
+    public MethodResourcesMapFactoryBean pointcutResourcesMapFactoryBean(){
+        MethodResourcesMapFactoryBean methodResourcesMapFactoryBean = new MethodResourcesMapFactoryBean();
+        methodResourcesMapFactoryBean.setSecurityResourceService(securityResourceService);
+        methodResourcesMapFactoryBean.setResourceType("pointcut");
+        return methodResourcesMapFactoryBean;
+    }
+
+    @Bean
+    @Profile("pointcut")
+    public ProtectPointcutPostProcessor protectPointcutPostProcessor(){
+        ProtectPointcutPostProcessor protectPointcutPostProcessor = new ProtectPointcutPostProcessor(mapBasedMethodSecurityMetadataSource());
+        protectPointcutPostProcessor.setPointcutMap(pointcutResourcesMapFactoryBean().getObject());
+        return protectPointcutPostProcessor;
+    }
+
+    @Bean
+    public CustomMethodSecurityInterceptor customMethodSecurityInterceptor(MapBasedMethodSecurityMetadataSource methodSecurityMetadataSource) {
+        CustomMethodSecurityInterceptor customMethodSecurityInterceptor =  new CustomMethodSecurityInterceptor();
+        customMethodSecurityInterceptor.setAccessDecisionManager(accessDecisionManager());
+        customMethodSecurityInterceptor.setAfterInvocationManager(afterInvocationManager());
+        customMethodSecurityInterceptor.setSecurityMetadataSource(methodSecurityMetadataSource);
+        RunAsManager runAsManager = runAsManager();
+        if (runAsManager != null) {
+            customMethodSecurityInterceptor.setRunAsManager(runAsManager);
+        }
+
+        return customMethodSecurityInterceptor;
+    }
+
+    /*@Override
+    protected AccessDecisionManager accessDecisionManager() {
+        AffirmativeBased affirmativeBased = (AffirmativeBased)super.accessDecisionManager();
+        List<AccessDecisionVoter<?>> decisionVoters = affirmativeBased.getDecisionVoters();
+        for(AccessDecisionVoter accessDecisionVoter : decisionVoters){
+            if(accessDecisionVoter instanceof RoleVoter){
+                decisionVoters.remove(accessDecisionVoter);
+            }
+        }
+        decisionVoters.add(0,roleVoter());
+        return affirmativeBased;
+    }*/
+
+    @Bean
+    public AccessDecisionVoter<? extends Object> roleVoter() {
+
+        RoleHierarchyVoter roleHierarchyVoter = new RoleHierarchyVoter(roleHierarchy());
+        return roleHierarchyVoter;
+    }
+
+    @Bean
+    public RoleHierarchyImpl roleHierarchy() {
+        RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
+        return roleHierarchy;
+    }
+
+    //    @Bean
+//    @Profile("pointcut")
+//    BeanPostProcessor protectPointcutPostProcessor() throws Exception {
 //
-//import io.security.corespringsecurity.security.metadatasource.UrlSecurityMetadataSource;
-//import lombok.extern.slf4j.Slf4j;
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.context.annotation.Configuration;
-//import org.springframework.security.access.AccessDecisionManager;
-//import org.springframework.security.access.AccessDecisionVoter;
-//import org.springframework.security.access.vote.AffirmativeBased;
-//import org.springframework.security.access.vote.RoleVoter;
-//import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
-//import org.springframework.security.config.annotation.method.configuration.GlobalMethodSecurityConfiguration;
-//import org.springframework.security.web.access.intercept.FilterInvocationSecurityMetadataSource;
-//import org.springframework.security.web.access.intercept.FilterSecurityInterceptor;
+//        Class<?> clazz = Class.forName("org.springframework.security.config.method.ProtectPointcutPostProcessor");
+//        Constructor<?> declaredConstructor = clazz.getDeclaredConstructor(MapBasedMethodSecurityMetadataSource.class);
+//        declaredConstructor.setAccessible(true);
+//        Object instance = declaredConstructor.newInstance(mapBasedMethodSecurityMetadataSource());
+//        Method setPointcutMap = instance.getClass().getMethod("setPointcutMap", Map.class);
+//        setPointcutMap.setAccessible(true);
+//        setPointcutMap.invoke(instance, pointcutResourcesMapFactoryBean().getObject());
 //
-//import java.util.Arrays;
-//import java.util.List;
-//
-//@Configuration
-//@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
-//@Slf4j
-//public class MethodSecurityConfig extends GlobalMethodSecurityConfiguration{
-//
-//    @Bean
-//    public FilterSecurityInterceptor customFilterSecurityInterceptor() throws Exception {
-//        FilterSecurityInterceptor filterSecurityInterceptor = new FilterSecurityInterceptor();
-//        filterSecurityInterceptor.setSecurityMetadataSource(urlSecurityMetadataSource());
-//        filterSecurityInterceptor.setAccessDecisionManager(affirmativeBased());
-//        return filterSecurityInterceptor;
+//        return (BeanPostProcessor)instance;
 //    }
-//
-//    @Bean
-//    public FilterInvocationSecurityMetadataSource urlSecurityMetadataSource() {
-//        return new UrlSecurityMetadataSource();
-//    }
-//
-//    @Bean
-//    public AccessDecisionManager affirmativeBased() {
-//        AffirmativeBased accessDecisionManager = new AffirmativeBased(getAccessDecisionVoters());
-//        return accessDecisionManager;
-//    }
-//
-//    private List<AccessDecisionVoter<?>> getAccessDecisionVoters() {
-//        return Arrays.asList(new RoleVoter());
-//    }
-//}
+
+
+}
