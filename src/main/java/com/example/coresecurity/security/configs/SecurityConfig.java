@@ -12,10 +12,12 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 
 import com.example.coresecurity.security.common.FormWebAuthenticationDetailsSource;
+import com.example.coresecurity.security.hanlder.FormAccessDeniedHandler;
 import com.example.coresecurity.security.provider.FormAuthenticationProvider;
 
 import lombok.RequiredArgsConstructor;
@@ -73,8 +75,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 			.defaultSuccessUrl("/")
 			.successHandler(authenticationSuccessHandler)
 			.failureHandler(authenticationFailureHandler)
-			.permitAll();
+			.permitAll()
 
+
+			.and()
+			.exceptionHandling()
+			.accessDeniedPage("/denied")
+			.accessDeniedHandler(accessDeniedHandler())
+			;
+
+	}
+
+	@Bean
+	public AccessDeniedHandler accessDeniedHandler() {
+		FormAccessDeniedHandler commonAccessDeniedHandler = new FormAccessDeniedHandler();
+		commonAccessDeniedHandler.setErrorPage("/denied");
+		return commonAccessDeniedHandler;
 	}
 
 }
